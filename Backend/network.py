@@ -1,3 +1,4 @@
+from collections import deque
 class Host:
     def __init__(self,name):
         self.name=name
@@ -24,10 +25,45 @@ class Network:
     def __init__(self):
         self.devices=[]
         self.links=[]
+        self.graph={}
+
     def add_device(self,device):
         self.devices.append(device)
+        self.graph[device]=[]
+
     def add_link(self,link):
         self.links.append(link)
+
+        device1=link.interface1.device
+        device2=link.interface2.device
+
+        self.graph[device1].append(device2)
+        self.graph[device2].append(device1)
+
+    def find_path(self,start,destination):
+        queue=deque([start])
+        visited={start}
+        parent={start:None}
+        while queue:
+            current=queue.popleft()
+
+            if current==destination:
+                break
+
+            for neighbor in self.graph[current]:
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    parent[neighbor]=current
+                    queue.append(neighbor)
+
+        path=[]
+        current=destination
+        while current is not None:
+            path.append(current)
+            current=parent[current]
+
+        path.reverse()
+        return path
 
 
 
@@ -85,3 +121,12 @@ for link in network.links:
         "<->",
         link.interface2.device.name
     )
+print("\nGraph:")
+
+for device, neighbors in network.graph.items():
+    print(device.name, "->", [neighbor.name for neighbor in neighbors])
+
+path = network.find_path(pc1, server)
+
+print("\nPath:")
+print(" -> ".join(device.name for device in path))
